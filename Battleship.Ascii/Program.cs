@@ -144,17 +144,19 @@ namespace Battleship.Ascii
                 position = GetRandomPosition();
                 isHit = GameController.CheckIsHit(myFleet, position);
                 telemetryClient.TrackEvent("Computer_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
-                
+
+                WriteBreak();
 
                 var hitMissMessage = isHit ? "has hit your ship !" : "miss";
                 var hitMissMessageColor = isHit ? ConsoleColor.Red : ConsoleColor.Blue;
-                WriteMessage($"Computer shot in {position.Column}{position.Row} and {hitMissMessage}", hitMissMessageColor);
                 
                 if (isHit)
                 {
                     DrawExplosion();
-
                 }
+
+                WriteMessage($"Computer shot in {position.Column}{position.Row} and {hitMissMessage}", hitMissMessageColor);
+                WriteBreak();
             }
             while (true);
         }
