@@ -3,8 +3,10 @@ namespace Battleship.Ascii.Tests
 {
    using Battleship.GameController.Contracts;
    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using System.Collections.Generic;
+    using System.Linq;
 
-   [TestClass]
+    [TestClass]
    public class ParsePositionTests
    {
       [TestMethod]
@@ -16,5 +18,16 @@ namespace Battleship.Ascii.Tests
 
          Assert.AreEqual(expected, actual);
       }
-   }
+
+        [TestMethod]
+        public void Test_GetRandomPosition()
+        {
+            var positions = new List<Position>();
+            for (var i = 0; i < 64; i++) {
+                positions.Add(Program.GetRandomPosition());
+            }
+
+            Assert.AreEqual(64, positions.Select(x => $"{x.Column},{x.Row}").Distinct().Count());
+        }
+    }
 }

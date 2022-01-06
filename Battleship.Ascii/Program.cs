@@ -21,7 +21,8 @@ namespace Battleship.Ascii
         private static List<PositionState> MyState;
         private static List<PositionState> EnemyState;
 
-        private static List<Position> MyGuesses = new List<Position>();
+        private static readonly List<Position> MyGuesses = new List<Position>();
+        private static readonly List<Position> ComputerGuesses = new List<Position>();
 
         static void Main()
         {
@@ -252,14 +253,21 @@ namespace Battleship.Ascii
             return new Position(letter, number);
         }
 
-        private static Position GetRandomPosition()
+        public static Position GetRandomPosition()
         {
-            int rows = 8;
+            int rows = 9;
             int lines = 8;
             var random = new Random();
-            var letter = (Letters)random.Next(lines);
-            var number = random.Next(rows);
-            var position = new Position(letter, number);
+
+            Position position;
+            do
+            {
+                var letter = (Letters)random.Next(lines);
+                var number = random.Next(1, rows);
+                position = new Position(letter, number);
+            } while (ComputerGuesses.Contains(position));
+
+            ComputerGuesses.Add(position);
             return position;
         }
 
