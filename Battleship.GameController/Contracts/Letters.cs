@@ -14,4 +14,12 @@
         G,
         H
     }
+
+    public enum Directions
+    {
+        North,
+        East,
+        South,
+        West
+    }
 }

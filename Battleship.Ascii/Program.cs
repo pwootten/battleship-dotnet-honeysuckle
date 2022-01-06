@@ -149,7 +149,7 @@ namespace Battleship.Ascii
 
                 var hitMissMessage = isHit ? "has hit your ship !" : "miss";
                 var hitMissMessageColor = isHit ? ConsoleColor.Red : ConsoleColor.Blue;
-                
+
                 if (isHit)
                 {
                     DrawExplosion();
@@ -250,29 +250,173 @@ namespace Battleship.Ascii
         private static void InitializeEnemyFleet()
         {
             enemyFleet = GameController.InitializeShips().ToList();
+            GetComputerStartPositions();
+        }
 
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 4 });
-            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 5 });
-            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 6 });
-            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 7 });
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 8 });
+        private static void GetComputerStartPositions()
+        {
+            int rows = 8;
+            int lines = 8;
 
-            enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 6 });
-            //enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 7 });
-            //enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 8 });
-            enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 9 });
+            var random = new Random();
 
-            enemyFleet[2].Positions.Add(new Position { Column = Letters.A, Row = 3 });
-            //enemyFleet[2].Positions.Add(new Position { Column = Letters.B, Row = 3 });
-            enemyFleet[2].Positions.Add(new Position { Column = Letters.C, Row = 3 });
 
-            enemyFleet[3].Positions.Add(new Position { Column = Letters.F, Row = 8 });
-            //enemyFleet[3].Positions.Add(new Position { Column = Letters.G, Row = 8 });
-            enemyFleet[3].Positions.Add(new Position { Column = Letters.H, Row = 8 });
+            foreach (var ship in enemyFleet)
+            {
+                Position startPosition;
+                do
+                {
+                    var letter = (Letters)random.Next(lines);
+                    var number = random.Next(1, rows);
+                    startPosition = new Position(letter, number);
 
-            enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 5 });
-            enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 6 });
+                } while (enemyFleet.SelectMany(f => f.Positions).Contains(startPosition));
+
+                placeComputerShip(startPosition, ship.Size);
+
+            }
+        }
+
+        private static void placeComputerShip(Position startPosition, int size)
+        {
+            var random = new Random();
+            int directions = 4;
+            List<Directions> directionList = new List<Directions>();     
+            var direction = (Directions)random.Next(directions);
+            bool isInvalidShipPosition = false;
+
+            Letters letter;
+            var number = 0;
+            Position position;
+
+            directionList.Add(direction);
+
+            do
+            {
+                //Add funtionality here to place the ship
+                switch (direction)
+                {
+                    case Directions.North:
+                    
+                        number = startPosition.Row - (size - 1);
+
+                        if (number >= 1)
+                        {
+                            for (int row = startPosition.Row; row > number; row--)
+                            {
+                                position = new Position(startPosition.Column, row);
+
+                                if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
+                                {
+                                    isInvalidShipPosition = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                            isInvalidShipPosition = true;
+
+                        break;
+
+                    case Directions.East:
+
+                        letter = startPosition.Column + (size - 1);
+
+                        if (letter <= Letters.H)
+                        {
+                            for (Letters column = startPosition.Column; column < letter; column++)
+                            {
+                                position = new Position(column, startPosition.Row);
+
+                                if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
+                                {
+                                    isInvalidShipPosition = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                            isInvalidShipPosition = true;
+
+                        break;
+
+                    case Directions.South:
+
+                        number = startPosition.Row + (size - 1);
+
+                        if (number <= 8)
+                        {
+                            for (int row = startPosition.Row; row < number; row++)
+                            {
+                                position = new Position(startPosition.Column, row);
+
+                                if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
+                                {
+                                    isInvalidShipPosition = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                            isInvalidShipPosition = true;
+
+                        break;
+
+                    case Directions.West:
+
+                        letter = startPosition.Column - (size - 1);
+
+                        if (letter >= Letters.A)
+                        {
+                            for (Letters column = startPosition.Column; column >= letter; column--)
+                            {
+                                position = new Position(column, startPosition.Row);
+
+                                if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
+                                {
+                                    isInvalidShipPosition = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                            isInvalidShipPosition = true;
+
+                        break;
+                }
+
+                // If the start position is invalid, then try a new direction
+                if (isInvalidShipPosition)
+                {
+                    direction = (Directions)random.Next(directions);
+                    directionList.Add(direction);
+                }
+
+            } while (directionList.Contains(direction));
         }
     }
 
 }
+
+//enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 4 });
+////enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 5 });
+////enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 6 });
+////enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 7 });
+//enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 8 });
+
+//enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 6 });
+////enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 7 });
+////enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 8 });
+//enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 9 });
+
+//enemyFleet[2].Positions.Add(new Position { Column = Letters.A, Row = 3 });
+////enemyFleet[2].Positions.Add(new Position { Column = Letters.B, Row = 3 });
+//enemyFleet[2].Positions.Add(new Position { Column = Letters.C, Row = 3 });
+
+//enemyFleet[3].Positions.Add(new Position { Column = Letters.F, Row = 8 });
+////enemyFleet[3].Positions.Add(new Position { Column = Letters.G, Row = 8 });
+//enemyFleet[3].Positions.Add(new Position { Column = Letters.H, Row = 8 });
+
+//enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 5 });
+//enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 6 });
+
