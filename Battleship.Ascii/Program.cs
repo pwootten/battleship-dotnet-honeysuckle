@@ -27,13 +27,13 @@ namespace Battleship.Ascii
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.Clear();
 
-                Console.WriteLine("                                     |__");
+                Console.WriteLine(@"                                     |__");
                 Console.WriteLine(@"                                     |\/");
-                Console.WriteLine("                                     ---");
-                Console.WriteLine("                                     / | [");
-                Console.WriteLine("                              !      | |||");
-                Console.WriteLine("                            _/|     _/|-++'");
-                Console.WriteLine("                        +  +--|    |--|--|_ |-");
+                Console.WriteLine(@"                                     ---");
+                Console.WriteLine(@"                                     / | [");
+                Console.WriteLine(@"                              !      | |||");
+                Console.WriteLine(@"                            _/|     _/|-++'");
+                Console.WriteLine(@"                        +  +--|    |--|--|_ |-");
                 Console.WriteLine(@"                     { /|__|  |/\__|  |--- |||__/");
                 Console.WriteLine(@"                    +---------------___[}-_===_.'____                 /\");
                 Console.WriteLine(@"                ____`-' ||___-{]_| _[}-  |     |_[___\==--            \/   _");
@@ -51,10 +51,55 @@ namespace Battleship.Ascii
                 Console.WriteLine("A serious problem occured. The application cannot continue and will be closed.");
                 telemetryClient.TrackException(e);
                 Console.WriteLine("");
-                Console.WriteLine("Error details:");      
+                Console.WriteLine("Error details:");
                 throw new Exception("Fatal error", e);
             }
+        }
+        private static void DisplayGrid(IEnumerable<Ship> ships)
+        {
+            Console.WriteLine("My Fleet");
+            for (var row = 1; row <= 8; row++)
+            {
+                for (var col = 0; col <= 7; col++)
+                {
+                    var ship = GetShip(ships, new Position { Column = (Letters)col, Row = row });
+                    if (ship != null)
+                    {
+                        Console.ForegroundColor = ship.Color;
+                        Console.Write(@"(#) ");
+                        continue;
+                    }
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write(@"(*) ");
+                }
+                Console.WriteLine();
+            }
+        }
 
+        public static Ship GetShip(IEnumerable<Ship> ships, Position shot)
+        {
+            if (ships == null)
+            {
+                throw new ArgumentNullException("ships");
+            }
+
+            if (shot == null)
+            {
+                throw new ArgumentNullException("shot");
+            }
+
+            foreach (var ship in ships)
+            {
+                foreach (var position in ship.Positions)
+                {
+                    if (position.Equals(shot))
+                    {
+                        return ship;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private static void StartGame()
@@ -73,10 +118,11 @@ namespace Battleship.Ascii
 
             do
             {
+                DisplayGrid(myFleet);
                 Console.WriteLine();
                 Console.WriteLine("Player, it's your turn");
                 Console.WriteLine("Enter coordinates for your shot :");
-                var position = ParsePosition(Console.ReadLine());                
+                var position = ParsePosition(Console.ReadLine());
                 var isHit = GameController.CheckIsHit(enemyFleet, position);
                 telemetryClient.TrackEvent("Player_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
                 if (isHit)
@@ -153,12 +199,20 @@ namespace Battleship.Ascii
             {
                 Console.WriteLine();
                 Console.WriteLine("Please enter the positions for the {0} (size: {1})", ship.Name, ship.Size);
-                for (var i = 1; i <= ship.Size; i++)
+
+                Console.WriteLine("Enter start position (e.g. A3):");
+                var position = Console.ReadLine();
+                while (!ship.AddPosition(position))
                 {
-                    Console.WriteLine("Enter position {0} of {1} (i.e A3):", i, ship.Size);
-                    var position = Console.ReadLine();
-                    ship.AddPosition(position);
-                    telemetryClient.TrackEvent("Player_PlaceShipPosition", new Dictionary<string, string>() { { "Position", position }, { "Ship", ship.Name }, { "PositionInShip", i.ToString() } });
+                    Console.WriteLine("Position not valid. Enter position (e.g. A3):");
+                    position = Console.ReadLine();
+                }
+                Console.WriteLine("Enter end position (e.g. A3):");
+                position = Console.ReadLine();
+                while (!ship.AddPosition(position))
+                {
+                    Console.WriteLine("Position not valid. Enter position (e.g. A3):");
+                    position = Console.ReadLine();
                 }
             }
         }
@@ -168,22 +222,22 @@ namespace Battleship.Ascii
             enemyFleet = GameController.InitializeShips().ToList();
 
             enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 4 });
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 5 });
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 6 });
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 7 });
+            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 5 });
+            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 6 });
+            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 7 });
             enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 8 });
 
             enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 6 });
-            enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 7 });
-            enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 8 });
+            //enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 7 });
+            //enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 8 });
             enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 9 });
 
             enemyFleet[2].Positions.Add(new Position { Column = Letters.A, Row = 3 });
-            enemyFleet[2].Positions.Add(new Position { Column = Letters.B, Row = 3 });
+            //enemyFleet[2].Positions.Add(new Position { Column = Letters.B, Row = 3 });
             enemyFleet[2].Positions.Add(new Position { Column = Letters.C, Row = 3 });
 
             enemyFleet[3].Positions.Add(new Position { Column = Letters.F, Row = 8 });
-            enemyFleet[3].Positions.Add(new Position { Column = Letters.G, Row = 8 });
+            //enemyFleet[3].Positions.Add(new Position { Column = Letters.G, Row = 8 });
             enemyFleet[3].Positions.Add(new Position { Column = Letters.H, Row = 8 });
 
             enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 5 });
