@@ -18,6 +18,8 @@ namespace Battleship.Ascii
 
         private static ConsoleColor mainColor = ConsoleColor.Yellow;
 
+        private static readonly List<Position> ComputerGuesses = new List<Position>();
+
         static void Main()
         {
             telemetryClient = new ApplicationInsightsTelemetryClient();
@@ -171,9 +173,16 @@ namespace Battleship.Ascii
             int rows = 8;
             int lines = 8;
             var random = new Random();
-            var letter = (Letters)random.Next(lines);
-            var number = random.Next(rows);
-            var position = new Position(letter, number);
+
+            Position position;
+            do
+            {
+                var letter = (Letters)random.Next(lines);
+                var number = random.Next(1, rows);
+                position = new Position(letter, number);
+            } while (ComputerGuesses.Contains(position));
+
+            ComputerGuesses.Add(position);
             return position;
         }
 
