@@ -29,5 +29,16 @@ namespace Battleship.Ascii.Tests
 
             Assert.AreEqual(64, positions.Select(x => $"{x.Column},{x.Row}").Distinct().Count());
         }
+
+        [TestMethod]
+        public void Test_ValidateInputPosition()
+        {
+            var position = Program.ParsePosition("H20");
+            Assert.IsNull(position);
+            position = Program.ParsePosition("Test123");
+            Assert.IsNull(position);
+            position = Program.ParsePosition("A1");
+            Assert.IsNotNull(position);
+        }
     }
 }

@@ -119,7 +119,7 @@ namespace Battleship.Ascii
                 var position = ParsePosition(Console.ReadLine());
                 while (position == null || MyGuesses.Contains(position))
                 {
-                    Console.WriteLine("Invalid position or you have already used this position :");
+                    Console.WriteLine("Position is outside the playing field, is not valid or you have already used this position :");
                     position = ParsePosition(Console.ReadLine());
                 }
                 MyGuesses.Add(position);
