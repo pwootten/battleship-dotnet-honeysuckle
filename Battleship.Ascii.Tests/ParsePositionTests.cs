@@ -23,11 +23,11 @@ namespace Battleship.Ascii.Tests
         public void Test_GetRandomPosition()
         {
             var positions = new List<Position>();
-            for (var i = 0; i < 20; i++) {
+            for (var i = 0; i < 64; i++) {
                 positions.Add(Program.GetRandomPosition());
             }
 
-            Assert.AreEqual(20, positions.Select(x => $"{x.Column},{x.Row}").Distinct().Count());
+            Assert.AreEqual(64, positions.Select(x => $"{x.Column},{x.Row}").Distinct().Count());
         }
     }
 }

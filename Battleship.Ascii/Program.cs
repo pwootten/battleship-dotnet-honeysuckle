@@ -170,7 +170,7 @@ namespace Battleship.Ascii
 
         public static Position GetRandomPosition()
         {
-            int rows = 8;
+            int rows = 9;
             int lines = 8;
             var random = new Random();
 
