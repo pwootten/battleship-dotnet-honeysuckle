@@ -14,6 +14,8 @@ namespace Battleship.Ascii
 
         private static List<Ship> enemyFleet;
 
+        private static int enemyFleetCount = 0;
+
         private static ITelemetryClient telemetryClient;
 
         private static ConsoleColor mainColor = ConsoleColor.Yellow;
@@ -29,7 +31,7 @@ namespace Battleship.Ascii
             {
                 Console.Title = "Battleship";
                 Console.BackgroundColor = ConsoleColor.Black;
-                Console.Clear();
+                //Console.Clear();
 
                 Console.WriteLine(@"                                     |__");
                 Console.WriteLine(@"                                     |\/");
@@ -61,7 +63,6 @@ namespace Battleship.Ascii
         }
         private static void DisplayGrid(IEnumerable<Ship> ships)
         {
-            Console.WriteLine("My Fleet");
             for (var row = 1; row <= 8; row++)
             {
                 for (var col = 0; col <= 7; col++)
@@ -109,7 +110,7 @@ namespace Battleship.Ascii
 
         private static void StartGame()
         {
-            Console.Clear();
+           // Console.Clear();
             Console.WriteLine("                  __");
             Console.WriteLine(@"                 /  \");
             Console.WriteLine("           .-.  |    |");
@@ -123,6 +124,7 @@ namespace Battleship.Ascii
 
             do
             {
+                Console.WriteLine("My Fleet");
                 DisplayGrid(myFleet);
                 Console.WriteLine();
                 Console.WriteLine("Player, it's your turn");
@@ -273,26 +275,31 @@ namespace Battleship.Ascii
                 } while (enemyFleet.SelectMany(f => f.Positions).Contains(startPosition));
 
                 placeComputerShip(startPosition, ship.Size);
-
             }
+
+            Console.WriteLine("Enemy Fleet");
+            DisplayGrid(enemyFleet);
         }
 
         private static void placeComputerShip(Position startPosition, int size)
         {
-            var random = new Random();
+            Random random = new Random();
             int directions = 4;
-            List<Directions> directionList = new List<Directions>();     
-            var direction = (Directions)random.Next(directions);
+            int number = 0;
             bool isInvalidShipPosition = false;
-
+            Directions direction = (Directions)random.Next(directions);
+            List<Directions> directionList = new List<Directions>();
+            List<Position> positionList = null;
             Letters letter;
-            var number = 0;
             Position position;
 
             directionList.Add(direction);
 
             do
             {
+                isInvalidShipPosition = false;
+                positionList = new List<Position>();
+
                 //Add funtionality here to place the ship
                 switch (direction)
                 {
@@ -300,17 +307,24 @@ namespace Battleship.Ascii
                     
                         number = startPosition.Row - (size - 1);
 
-                        if (number >= 1)
+                        if (number >= 1 && !enemyFleet.SelectMany(f => f.Positions).Contains(startPosition))
                         {
-                            for (int row = startPosition.Row; row > number; row--)
+                            
+                            for (int row = startPosition.Row; row >= number; row--)
                             {
                                 position = new Position(startPosition.Column, row);
+                                positionList.Add(position);
 
                                 if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
                                 {
                                     isInvalidShipPosition = true;
                                     break;
                                 }
+                            }
+
+                            if (!isInvalidShipPosition)
+                            {
+                                setShipPosition(positionList);
                             }
                         }
                         else
@@ -322,17 +336,25 @@ namespace Battleship.Ascii
 
                         letter = startPosition.Column + (size - 1);
 
-                        if (letter <= Letters.H)
+                        if (letter <= Letters.H && !enemyFleet.SelectMany(f => f.Positions).Contains(startPosition))
                         {
-                            for (Letters column = startPosition.Column; column < letter; column++)
+                            
+
+                            for (Letters column = startPosition.Column; column <= letter; column++)
                             {
                                 position = new Position(column, startPosition.Row);
+                                positionList.Add(position);
 
                                 if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
                                 {
                                     isInvalidShipPosition = true;
                                     break;
                                 }
+                            }
+
+                            if (!isInvalidShipPosition)
+                            {
+                                setShipPosition(positionList);
                             }
                         }
                         else
@@ -344,17 +366,23 @@ namespace Battleship.Ascii
 
                         number = startPosition.Row + (size - 1);
 
-                        if (number <= 8)
+                        if (number <= 8 && !enemyFleet.SelectMany(f => f.Positions).Contains(startPosition))
                         {
-                            for (int row = startPosition.Row; row < number; row++)
+                            for (int row = startPosition.Row; row <= number; row++)
                             {
                                 position = new Position(startPosition.Column, row);
+                                positionList.Add(position);
 
                                 if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
                                 {
                                     isInvalidShipPosition = true;
                                     break;
                                 }
+                            }
+
+                            if (!isInvalidShipPosition)
+                            {
+                                setShipPosition(positionList);
                             }
                         }
                         else
@@ -366,17 +394,23 @@ namespace Battleship.Ascii
 
                         letter = startPosition.Column - (size - 1);
 
-                        if (letter >= Letters.A)
+                        if (letter >= Letters.A && !enemyFleet.SelectMany(f => f.Positions).Contains(startPosition))
                         {
                             for (Letters column = startPosition.Column; column >= letter; column--)
                             {
                                 position = new Position(column, startPosition.Row);
+                                positionList.Add(position);
 
                                 if (enemyFleet.SelectMany(f => f.Positions).Contains(position))
                                 {
                                     isInvalidShipPosition = true;
                                     break;
                                 }
+                            }
+
+                            if (!isInvalidShipPosition)
+                            {
+                                setShipPosition(positionList);
                             }
                         }
                         else
@@ -388,11 +422,30 @@ namespace Battleship.Ascii
                 // If the start position is invalid, then try a new direction
                 if (isInvalidShipPosition)
                 {
-                    direction = (Directions)random.Next(directions);
-                    directionList.Add(direction);
+                    while (directionList.Count < 4)
+                    {
+                        direction = (Directions)random.Next(directions);
+
+                        if (!directionList.Contains(direction))
+                        {
+                            directionList.Add(direction);
+                            break;
+                        }
+                    }
+                    
                 }
 
-            } while (directionList.Contains(direction));
+            } while (directionList.Count < 4 && isInvalidShipPosition);
+        }
+
+        private static void setShipPosition(List<Position> positionList)
+        {
+            foreach (Position pstn in positionList)
+            {
+                enemyFleet[enemyFleetCount].Positions.Add(pstn);
+            }
+
+            enemyFleetCount++;
         }
     }
 
