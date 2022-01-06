@@ -16,24 +16,24 @@ namespace Battleship.Ascii.TelemetryClient
 
         public ApplicationInsightsTelemetryClient()
         {
-            TelemetryConfiguration config = TelemetryConfiguration.CreateFromConfiguration(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"ApplicationInsights.config"))); // Reads ApplicationInsights.config file if present
-            telemetryClient = new Microsoft.ApplicationInsights.TelemetryClient(config);
+            //TelemetryConfiguration config = TelemetryConfiguration.CreateFromConfiguration(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"ApplicationInsights.config"))); // Reads ApplicationInsights.config file if present
+           // telemetryClient = new Microsoft.ApplicationInsights.TelemetryClient(config);
         }
         public void TrackEvent(string eventName)
         {
-            telemetryClient.TrackEvent(eventName);
+          // telemetryClient.TrackEvent(eventName);
         }
 
         public void TrackEvent(string eventName, Dictionary<string, string> properties)
         {
-            telemetryClient.TrackEvent(eventName, properties);
+          //  telemetryClient.TrackEvent(eventName, properties);
         }
 
         public void TrackException(Exception exception)
         {
-            telemetryClient?.TrackException(exception);
-            telemetryClient.Flush();
-            Thread.Sleep(1000);
+            //telemetryClient?.TrackException(exception);
+            //telemetryClient.Flush();
+            //Thread.Sleep(1000);
         }
     }
 }

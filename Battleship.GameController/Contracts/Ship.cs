@@ -51,22 +51,66 @@ namespace Battleship.GameController.Contracts
 
         #region Public Methods and Operators
 
+        private Orientation? MyOrientation { get; set; }
+
         /// <summary>
         /// The add position.
         /// </summary>
         /// <param name="input">
         /// The input.
         /// </param>
-        public void AddPosition(string input)
+        public bool AddPosition(string input)
         {
-            if (Positions == null)
+            // input must be 2 chars
+            if (input?.Length != 2) return false;
+
+            // First char must be a letter between A and H 
+            // Second char must be a number between 1 and 8
+            if (!Enum.TryParse<Letters>(input.Substring(0, 1), out var letter) ||
+                !int.TryParse(input.Substring(1, 1), out var number) ||
+                number > 8 || number < 1) return false;
+
+            return AddPosition(new Position { Column = letter, Row = number });
+        }
+
+        public bool AddPosition(Position position)
+        {
+            // Can't add more than 2 positions (start and end)
+            if (Positions.Count >= 2) return false;
+
+            if (Positions.Count == 0)
             {
-                Positions = new List<Position>();
+                Positions.Add(position);
+                return true;
             }
 
-            var letter = (Letters)Enum.Parse(typeof(Letters), input.ToUpper().Substring(0, 1));
-            var number = int.Parse(input.Substring(1, 1));
-            Positions.Add(new Position { Column = letter, Row = number });
+            if (Positions.Count == 1)
+            {
+                if (Positions[0].Row == position.Row)
+                {
+                    if (Math.Abs(Positions[0].Column - position.Column) == Size - 1)
+                    {
+                        for (int i = (int)Positions[0].Column + 1; i < Size + (int)Positions[0].Column; i++)
+                        {
+                            Positions.Add(new Position { Column = (Letters)i, Row = position.Row });
+                        }
+                        return true;
+                    }
+                }
+                if (Positions[0].Column == position.Column)
+                {
+                    if (Math.Abs(Positions[0].Row - position.Row) == Size - 1)
+                    {
+                        for (int i = Positions[0].Row + 1; i < Size + Positions[0].Row; i++)
+                        {
+                            Positions.Add(new Position { Column = position.Column, Row = i });
+                        }
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         public bool IsPlaced
@@ -79,5 +123,11 @@ namespace Battleship.GameController.Contracts
             }
         }
         #endregion
+
+        private enum Orientation
+        {
+            Verticle,
+            Horizontal
+        }
     }
 }
