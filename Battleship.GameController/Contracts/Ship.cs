@@ -21,6 +21,7 @@ namespace Battleship.GameController.Contracts
         public Ship()
         {
             Positions = new List<Position>();
+            Hits = new List<Position>();
         }
 
         #endregion
@@ -36,6 +37,7 @@ namespace Battleship.GameController.Contracts
         /// Gets or sets the positions.
         /// </summary>
         public List<Position> Positions { get; set; }
+        private List<Position> Hits { get; set; }
 
         /// <summary>
         /// The color of the ship
@@ -50,6 +52,18 @@ namespace Battleship.GameController.Contracts
         #endregion
 
         #region Public Methods and Operators
+
+        public void RegisterHit(Position position)
+        {
+            if (position == null) return;
+            if (!Hits.Any(p => p.Equals(position)) &&
+                Positions.Any(p => p.Equals(position)))
+            {
+                Hits.Add(position);
+            }
+        }
+
+        public bool IsDestroyed { get => Hits.Count == Positions.Count; }
 
         /// <summary>
         /// The add position.
