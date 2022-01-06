@@ -185,7 +185,7 @@ namespace Battleship.Ascii
             Console.WriteLine("#######################");
             Console.WriteLine("Enemy Fleet");
             DisplayGrid(EnemyState);
-            //Console.WriteLine($"Computer Guesses: {string.Join(", ", ComputerGuesses.Select(g => $"{g.Column}{g.Row}"))}");
+            Console.WriteLine($"Computer Guesses: {string.Join(", ", ComputerGuesses.Select(g => $"{g.Column}{g.Row}"))}");
             enemyFleet.ForEach(f =>
             {
                 Console.Write($"{f.Name}:");
