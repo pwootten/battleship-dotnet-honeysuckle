@@ -51,8 +51,6 @@ namespace Battleship.GameController.Contracts
 
         #region Public Methods and Operators
 
-        private Orientation? MyOrientation { get; set; }
-
         /// <summary>
         /// The add position.
         /// </summary>
@@ -64,6 +62,7 @@ namespace Battleship.GameController.Contracts
             // input must be 2 chars
             if (input?.Length != 2) return false;
 
+            input = input.ToUpper();
             // First char must be a letter between A and H 
             // Second char must be a number between 1 and 8
             if (!Enum.TryParse<Letters>(input.Substring(0, 1), out var letter) ||

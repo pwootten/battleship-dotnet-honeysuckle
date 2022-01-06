@@ -14,6 +14,9 @@ namespace Battleship.Ascii
 
         private static List<Ship> enemyFleet;
 
+        private static List<PositionState> MyState;
+        private static List<PositionState> EnemyState;
+
         private static ITelemetryClient telemetryClient;
 
         static void Main()
@@ -55,18 +58,23 @@ namespace Battleship.Ascii
                 throw new Exception("Fatal error", e);
             }
         }
-        private static void DisplayGrid(IEnumerable<Ship> ships)
+        private static void DisplayGrid(IEnumerable<PositionState> state)
         {
-            Console.WriteLine("My Fleet");
+            var startColor = Console.ForegroundColor;
+
+            Console.WriteLine("   A   B   C   D   E   F   G   H");
             for (var row = 1; row <= 8; row++)
             {
+                Console.ForegroundColor = startColor;
+                Console.Write($"{row} ");
                 for (var col = 0; col <= 7; col++)
                 {
-                    var ship = GetShip(ships, new Position { Column = (Letters)col, Row = row });
-                    if (ship != null)
+                    var positionState = state.FirstOrDefault(st => st.Position.Column == (Letters)col && st.Position.Row == row);// GetShip(ships, new Position { Column = (Letters)col, Row = row });
+                    if (positionState != null)
                     {
-                        Console.ForegroundColor = ship.Color;
-                        Console.Write(@"(#) ");
+                        Console.ForegroundColor = positionState.Color;
+
+                        Console.Write($"({(positionState.Status == State.Hit ? "!" : positionState.Status == State.Unknown ? "?" : positionState.Status == State.Miss ? "O" : "#")}) ");
                         continue;
                     }
                     Console.ForegroundColor = ConsoleColor.Cyan;
@@ -74,6 +82,7 @@ namespace Battleship.Ascii
                 }
                 Console.WriteLine();
             }
+            Console.ForegroundColor = startColor;
         }
 
         public static Ship GetShip(IEnumerable<Ship> ships, Position shot)
@@ -118,12 +127,14 @@ namespace Battleship.Ascii
 
             do
             {
-                DisplayGrid(myFleet);
+                ShowGridStatus();
+
                 Console.WriteLine();
                 Console.WriteLine("Player, it's your turn");
                 Console.WriteLine("Enter coordinates for your shot :");
                 var position = ParsePosition(Console.ReadLine());
                 var isHit = GameController.CheckIsHit(enemyFleet, position);
+                UpdateGrid(EnemyState, position, isHit);
                 telemetryClient.TrackEvent("Player_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
                 if (isHit)
                 {
@@ -140,6 +151,7 @@ namespace Battleship.Ascii
                 }
 
                 Console.WriteLine(isHit ? "Yeah ! Nice hit !" : "Miss");
+                ShowGridStatus();
 
                 position = GetRandomPosition();
                 isHit = GameController.CheckIsHit(myFleet, position);
@@ -160,8 +172,27 @@ namespace Battleship.Ascii
                     Console.WriteLine(@"                   \  \   /  /");
 
                 }
+                UpdateGrid(MyState, position, isHit);
             }
             while (true);
+        }
+
+        private static void ShowGridStatus()
+        {
+            Console.WriteLine("My Fleet");
+            DisplayGrid(MyState);
+            Console.WriteLine("Enemy Fleet");
+            DisplayGrid(EnemyState);
+            Console.WriteLine("#################################################");
+        }
+
+        private static void UpdateGrid(List<PositionState> positionStates, Position position, bool isHit)
+        {
+            var positionState = positionStates.FirstOrDefault(ps => ps.Position.Equals(position));
+            if (positionState == null) return;
+
+            positionState.Status = isHit ? State.Hit : State.Miss;
+            positionState.Color = isHit ? ConsoleColor.Red : ConsoleColor.Yellow;
         }
 
         public static Position ParsePosition(string input)
@@ -184,9 +215,38 @@ namespace Battleship.Ascii
 
         private static void InitializeGame()
         {
-            InitializeMyFleet();
+            //InitializeMyFleet();
+            InitializeMyFleetStatic();
 
             InitializeEnemyFleet();
+
+            InitializeGrids();
+        }
+
+        private static void InitializeGrids()
+        {
+            MyState = new List<PositionState>();
+            EnemyState = new List<PositionState>();
+            for (var row = 1; row <= 8; row++)
+            {
+                for (var col = 0; col <= 7; col++)
+                {
+                    var position = new Position { Column = (Letters)col, Row = row };
+                    var ship = GetShip(myFleet, position);
+                    MyState.Add(new PositionState
+                    {
+                        Position = position,
+                        Color = ship?.Color ?? ConsoleColor.Cyan,
+                        Status = ship == null ? State.Water : State.Ship
+                    });
+                    EnemyState.Add(new PositionState
+                    {
+                        Position = position,
+                        Color = ConsoleColor.Cyan,
+                        Status = State.Unknown
+                    });
+                }
+            }
         }
 
         private static void InitializeMyFleet()
@@ -217,31 +277,44 @@ namespace Battleship.Ascii
             }
         }
 
+        private static void InitializeMyFleetStatic()
+        {
+            myFleet = GameController.InitializeShips().ToList();
+
+            myFleet[0].AddPosition(new Position { Column = Letters.B, Row = 4 });
+            myFleet[0].AddPosition(new Position { Column = Letters.B, Row = 8 });
+
+            myFleet[1].AddPosition(new Position { Column = Letters.E, Row = 6 });
+            myFleet[1].AddPosition(new Position { Column = Letters.E, Row = 9 });
+
+            myFleet[2].AddPosition(new Position { Column = Letters.A, Row = 3 });
+            myFleet[2].AddPosition(new Position { Column = Letters.C, Row = 3 });
+
+            myFleet[3].AddPosition(new Position { Column = Letters.F, Row = 8 });
+            myFleet[3].AddPosition(new Position { Column = Letters.H, Row = 8 });
+
+            myFleet[4].AddPosition(new Position { Column = Letters.C, Row = 5 });
+            myFleet[4].AddPosition(new Position { Column = Letters.C, Row = 6 });
+        }
+
         private static void InitializeEnemyFleet()
         {
             enemyFleet = GameController.InitializeShips().ToList();
 
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 4 });
-            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 5 });
-            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 6 });
-            //enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 7 });
-            enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 8 });
+            enemyFleet[0].AddPosition(new Position { Column = Letters.B, Row = 4 });
+            enemyFleet[0].AddPosition(new Position { Column = Letters.B, Row = 8 });
 
-            enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 6 });
-            //enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 7 });
-            //enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 8 });
-            enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 9 });
+            enemyFleet[1].AddPosition(new Position { Column = Letters.E, Row = 6 });
+            enemyFleet[1].AddPosition(new Position { Column = Letters.E, Row = 9 });
 
-            enemyFleet[2].Positions.Add(new Position { Column = Letters.A, Row = 3 });
-            //enemyFleet[2].Positions.Add(new Position { Column = Letters.B, Row = 3 });
-            enemyFleet[2].Positions.Add(new Position { Column = Letters.C, Row = 3 });
+            enemyFleet[2].AddPosition(new Position { Column = Letters.A, Row = 3 });
+            enemyFleet[2].AddPosition(new Position { Column = Letters.C, Row = 3 });
 
-            enemyFleet[3].Positions.Add(new Position { Column = Letters.F, Row = 8 });
-            //enemyFleet[3].Positions.Add(new Position { Column = Letters.G, Row = 8 });
-            enemyFleet[3].Positions.Add(new Position { Column = Letters.H, Row = 8 });
+            enemyFleet[3].AddPosition(new Position { Column = Letters.F, Row = 8 });
+            enemyFleet[3].AddPosition(new Position { Column = Letters.H, Row = 8 });
 
-            enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 5 });
-            enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 6 });
+            enemyFleet[4].AddPosition(new Position { Column = Letters.C, Row = 5 });
+            enemyFleet[4].AddPosition(new Position { Column = Letters.C, Row = 6 });
         }
     }
 }
