@@ -54,7 +54,7 @@ namespace Battleship.Ascii
 
                 InitializeGame();
 
-                Console.WriteLine("Press any key to start the game");
+                Console.WriteLine("Press the enter key to start the game");
                 Console.ReadLine();
                 StartGame();
             }
@@ -165,12 +165,12 @@ namespace Battleship.Ascii
                 }
                 else
                 {
-                    WriteMessage("Miss", ConsoleColor.Blue);
+                    WriteMessage("Miss!", ConsoleColor.Blue);
                 }
 
                 if (enemyFleet.All(s => s.IsDestroyed)) {
                     Console.WriteLine("Well done, you are the winner!");
-                    Console.WriteLine("Press any key to continue");
+                    Console.WriteLine("Press the enter key to continue");
                     Console.ReadLine();
                     break;
                 }
@@ -178,8 +178,10 @@ namespace Battleship.Ascii
                 position = GetRandomPosition();
                 isHit = GameController.CheckIsHit(myFleet, position);
                 telemetryClient.TrackEvent("Computer_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
-                
-                var hitMissMessage = isHit ? "has hit your ship !" : "miss";
+
+                WriteBreak();
+
+                var hitMissMessage = isHit ? "has hit your ship !" : "missed";
                 var hitMissMessageColor = isHit ? ConsoleColor.Red : ConsoleColor.Blue;
                 WriteMessage($"Computer shot in {position.Column}{position.Row} and {hitMissMessage}", hitMissMessageColor);
 
@@ -192,11 +194,13 @@ namespace Battleship.Ascii
                 if (myFleet.All(s => s.IsDestroyed))
                 {
                     Console.WriteLine("You lost");
-                    Console.WriteLine("Press any key to continue");
+                    Console.WriteLine("Press the enter key to continue");
                     Console.ReadLine();
                     break;
                 }
-                Console.WriteLine("Press any key to continue");
+                WriteBreak();
+
+                Console.WriteLine("Press the enter key to continue");
                 Console.ReadLine();
                 round++;
             }
@@ -315,8 +319,8 @@ namespace Battleship.Ascii
 
         private static void InitializeGame()
         {
-            //InitializeMyFleet();
-            InitializeMyFleetStatic();
+            InitializeMyFleet();
+            //InitializeMyFleetStatic();
 
             InitializeEnemyFleet();
 
