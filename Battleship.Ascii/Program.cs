@@ -168,7 +168,7 @@ namespace Battleship.Ascii
             return new Position(letter, number);
         }
 
-        private static Position GetRandomPosition()
+        public static Position GetRandomPosition()
         {
             int rows = 8;
             int lines = 8;
