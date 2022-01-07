@@ -12,7 +12,7 @@ namespace Battleship.Ascii
     {
         private static List<Ship> myFleet;
 
-        private static List<Ship> enemyFleet;
+        public static List<Ship> enemyFleet;
 
         private static int enemyFleetCount = 0;
 
@@ -258,7 +258,7 @@ namespace Battleship.Ascii
             }
         }
 
-        private static void InitializeEnemyFleet()
+        public static void InitializeEnemyFleet()
         {
             enemyFleet = GameController.InitializeShips().ToList();
             GetComputerStartPositions();
@@ -271,7 +271,7 @@ namespace Battleship.Ascii
 
             var random = new Random();
 
-
+            enemyFleetCount = 0;
             foreach (var ship in enemyFleet)
             {
                 Position startPosition;
