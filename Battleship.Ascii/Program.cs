@@ -20,6 +20,10 @@ namespace Battleship.Ascii
 
         private static ConsoleColor mainColor = ConsoleColor.Yellow;
 
+        private static List<PositionState> MyState;
+        private static List<PositionState> EnemyState;
+
+        private static readonly List<Position> MyGuesses = new List<Position>();
         private static readonly List<Position> ComputerGuesses = new List<Position>();
 
         static void Main()
@@ -33,7 +37,7 @@ namespace Battleship.Ascii
             {
                 Console.Title = "Battleship";
                 Console.BackgroundColor = ConsoleColor.Black;
-                //Console.Clear();
+                Console.Clear();
 
                 Console.WriteLine(@"                                     |__");
                 Console.WriteLine(@"                                     |\/");
@@ -63,6 +67,7 @@ namespace Battleship.Ascii
                 throw new Exception("Fatal error", e);
             }
         }
+
         private static void DisplayGrid(IEnumerable<Ship> ships)
         {
             for (var row = 1; row <= 8; row++)
@@ -112,7 +117,7 @@ namespace Battleship.Ascii
 
         private static void StartGame()
         {
-           // Console.Clear();
+            Console.Clear();
             Console.WriteLine("                  __");
             Console.WriteLine(@"                 /  \");
             Console.WriteLine("           .-.  |    |");
@@ -124,15 +129,26 @@ namespace Battleship.Ascii
             Console.WriteLine(@"   \    \_/");
             Console.WriteLine(@"    """"""""");
 
+            var round = 1;
             do
             {
-                Console.WriteLine("My Fleet");
-                DisplayGrid(myFleet);
+                Console.Clear();
+                Console.WriteLine($"Round {round}");
+                ShowGridStatus();
+
                 Console.WriteLine();
                 Console.WriteLine("Player, it's your turn");
                 Console.WriteLine("Enter coordinates for your shot :");
                 var position = ParsePosition(Console.ReadLine());
+                while (position == null || MyGuesses.Contains(position))
+                {
+                    Console.WriteLine("Position is outside the playing field, is not valid or you have already used this position :");
+                    position = ParsePosition(Console.ReadLine());
+                }
+                MyGuesses.Add(position);
+
                 var isHit = GameController.CheckIsHit(enemyFleet, position);
+                UpdateGrid(EnemyState, position, isHit);
                 telemetryClient.TrackEvent("Player_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
                 if (isHit)
                 {
@@ -158,17 +174,105 @@ namespace Battleship.Ascii
                 {
                     DrawExplosion();
                 }
+                UpdateGrid(MyState, position, isHit);
 
                 WriteMessage($"Computer shot in {position.Column}{position.Row} and {hitMissMessage}", hitMissMessageColor);
                 WriteBreak();
+
+                Console.WriteLine("Press the enter key to continue");
+                Console.ReadLine();
+
+                round++;
             }
             while (true);
         }
 
+        private static void ShowGridStatus()
+        {
+            var defaultColor = Console.ForegroundColor;
+            Console.WriteLine("#################################################");
+            Console.WriteLine("My Fleet");
+            DisplayGrid(MyState);
+            Console.WriteLine($"My Guesses: {string.Join(", ", MyGuesses.Select(g => $"{g.Column}{g.Row}"))}");
+            myFleet.ForEach(f =>
+            {
+                Console.Write($"{f.Name}:");
+                Console.ForegroundColor = f.IsDestroyed ? ConsoleColor.Red : ConsoleColor.Green;
+                Console.Write(f.IsDestroyed ? "Destroyed" : "Active");
+                Console.ForegroundColor = defaultColor;
+                Console.Write(", ");
+            });
+            Console.ForegroundColor = defaultColor;
+
+            Console.WriteLine();
+            Console.WriteLine("#######################");
+            Console.WriteLine("Enemy Fleet");
+            DisplayGrid(EnemyState);
+            Console.WriteLine($"Computer Guesses: {string.Join(", ", ComputerGuesses.Select(g => $"{g.Column}{g.Row}"))}");
+            enemyFleet.ForEach(f =>
+            {
+                Console.Write($"{f.Name}:");
+                Console.ForegroundColor = f.IsDestroyed ? ConsoleColor.Red : ConsoleColor.Green;
+                Console.Write(f.IsDestroyed ? "Destroyed" : "Active");
+                Console.ForegroundColor = defaultColor;
+                Console.Write(", ");
+            });
+            Console.ForegroundColor = defaultColor;
+
+            Console.WriteLine();
+            Console.WriteLine("#################################################");
+        }
+
+        private static void DisplayGrid(IEnumerable<PositionState> state)
+        {
+            Console.WriteLine("   A   B   C   D   E   F   G   H");
+            for (var row = 1; row <= 8; row++)
+            {
+                Console.ForegroundColor = mainColor;
+                Console.Write($"{row} ");
+                for (var col = 0; col <= 7; col++)
+                {
+                    var positionState = state.FirstOrDefault(st => st.Position.Column == (Letters)col && st.Position.Row == row);
+                    if (positionState != null)
+                    {
+                        Console.ForegroundColor = positionState.Color;
+
+                        Console.Write($"({(positionState.Status == State.Hit ? "!" : positionState.Status == State.Unknown ? "?" : positionState.Status == State.Miss ? "O" : "#")}) ");
+                        continue;
+                    }
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write(@"(*) ");
+                }
+                Console.WriteLine();
+            }
+
+            Console.ForegroundColor = mainColor;
+        }
+
+        private static void UpdateGrid(List<PositionState> positionStates, Position position, bool isHit)
+        {
+            var positionState = positionStates.FirstOrDefault(ps => ps.Position.Equals(position));
+            if (positionState == null) return;
+
+            positionState.Status = isHit ? State.Hit : State.Miss;
+
+            if (positionState.Color == ConsoleColor.Cyan)
+            {
+                positionState.Color = isHit ? ConsoleColor.Red : ConsoleColor.Yellow;
+            }
+        }
+
         public static Position ParsePosition(string input)
         {
-            var letter = (Letters)Enum.Parse(typeof(Letters), input.ToUpper().Substring(0, 1));
-            var number = int.Parse(input.Substring(1, 1));
+            if (input?.Length != 2) return null;
+
+            input = input.ToUpper();
+            // First char must be a letter between A and H 
+            // Second char must be a number between 1 and 8
+            if (!Enum.TryParse<Letters>(input.Substring(0, 1), out var letter) ||
+                !int.TryParse(input.Substring(1, 1), out var number) ||
+                number > 8 || number < 1) return null;
+
             return new Position(letter, number);
         }
 
@@ -219,8 +323,35 @@ namespace Battleship.Ascii
         private static void InitializeGame()
         {
             InitializeMyFleet();
-
+            //InitializeMyFleetStatic();
             InitializeEnemyFleet();
+            InitializeGrids();
+        }
+
+        private static void InitializeGrids()
+        {
+            MyState = new List<PositionState>();
+            EnemyState = new List<PositionState>();
+            for (var row = 1; row <= 8; row++)
+            {
+                for (var col = 0; col <= 7; col++)
+                {
+                    var position = new Position { Column = (Letters)col, Row = row };
+                    var ship = GetShip(myFleet, position);
+                    MyState.Add(new PositionState
+                    {
+                        Position = position,
+                        Color = ship?.Color ?? ConsoleColor.Cyan,
+                        Status = ship == null ? State.Water : State.Ship
+                    });
+                    EnemyState.Add(new PositionState
+                    {
+                        Position = position,
+                        Color = ConsoleColor.Cyan,
+                        Status = State.Unknown
+                    });
+                }
+            }
         }
 
         private static void InitializeMyFleet()
@@ -263,7 +394,6 @@ namespace Battleship.Ascii
             enemyFleet = GameController.InitializeShips().ToList();
             GetComputerStartPositions();
         }
-
         private static void GetComputerStartPositions()
         {
             int rows = 8;

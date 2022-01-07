@@ -31,6 +31,16 @@ namespace Battleship.Ascii.Tests
         }
 
         [TestMethod]
+        public void Test_ValidateInputPosition()
+        {
+            var position = Program.ParsePosition("H20");
+            Assert.IsNull(position);
+            position = Program.ParsePosition("Test123");
+            Assert.IsNull(position);
+            position = Program.ParsePosition("A1");
+            Assert.IsNotNull(position);
+        }
+
         public void Test_ValidateRandomisedFleet()
         {
             var fleets = new List<string>();

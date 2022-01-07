@@ -12,6 +12,7 @@ namespace Battleship.GameController.Contracts
     public class Ship
     {
         private bool isPlaced;
+        private List<Position> Hits { get; set; }
 
         #region Constructors and Destructors
 
@@ -21,6 +22,7 @@ namespace Battleship.GameController.Contracts
         public Ship()
         {
             Positions = new List<Position>();
+            Hits = new List<Position>();
         }
 
         #endregion
@@ -47,11 +49,21 @@ namespace Battleship.GameController.Contracts
         /// </summary>
         public int Size { get; set; }
 
+        public bool IsDestroyed { get => Hits.Count == Positions.Count; }
+
         #endregion
 
         #region Public Methods and Operators
 
-        private Orientation? MyOrientation { get; set; }
+        public void RegisterHit(Position position)
+        {
+            if (position == null) return;
+            if (!Hits.Any(p => p.Equals(position)) &&
+                Positions.Any(p => p.Equals(position)))
+            {
+                Hits.Add(position);
+            }
+        }
 
         /// <summary>
         /// The add position.
@@ -64,6 +76,7 @@ namespace Battleship.GameController.Contracts
             // input must be 2 chars
             if (input?.Length != 2) return false;
 
+            input = input.ToUpper();
             // First char must be a letter between A and H 
             // Second char must be a number between 1 and 8
             if (!Enum.TryParse<Letters>(input.Substring(0, 1), out var letter) ||
