@@ -80,27 +80,6 @@ namespace Battleship.Ascii
             }
         }
 
-        private static void DisplayGrid(IEnumerable<Ship> ships)
-        {
-            for (var row = 1; row <= 8; row++)
-            {
-                for (var col = 0; col <= 7; col++)
-                {
-                    var ship = GetShip(ships, new Position { Column = (Letters)col, Row = row });
-                    if (ship != null)
-                    {
-                        Console.ForegroundColor = ship.Color;
-                        Console.Write(@"(#) ");
-                        continue;
-                    }
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.Write(@"(*) ");
-                }
-                Console.WriteLine();
-            }
-            Console.ForegroundColor = mainColor;
-        }
-
         public static Ship GetShip(IEnumerable<Ship> ships, Position shot)
         {
             if (ships == null)
@@ -151,7 +130,16 @@ namespace Battleship.Ascii
                 Console.WriteLine();
                 Console.WriteLine("Player, it's your turn");
                 Console.WriteLine("Enter coordinates for your shot :");
-                var position = ParsePosition(Console.ReadLine());
+                var input = Console.ReadLine();
+                if (input == "/win")
+                {
+                    Console.Clear();
+                    DisplayWinnerMessage();
+                    Thread.Sleep(3000);
+                    DisplayFireworks().Wait();
+                }
+                var position = ParsePosition(input);
+
                 while (position == null || MyGuesses.Contains(position))
                 {
                     Console.WriteLine("Position is outside the playing field, is not valid or you have already used this position :");
@@ -219,7 +207,7 @@ namespace Battleship.Ascii
             var defaultColor = Console.ForegroundColor;
             Console.WriteLine("#################################################");
             Console.WriteLine("My Fleet");
-            DisplayGrid(enemyFleet);
+            DisplayGrid(MyState);
             Console.WriteLine($"My Guesses: {string.Join(", ", MyGuesses.Select(g => $"{g.Column}{g.Row}"))}");
             myFleet.ForEach(f =>
             {
@@ -391,29 +379,78 @@ namespace Battleship.Ascii
 
             foreach (var ship in myFleet)
             {
-                Console.WriteLine();
-                Console.WriteLine("Please enter the positions for the {0} (size: {1})", ship.Name, ship.Size);
-                WriteBreak();
+                var isValidShip = false;
+                do
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Please enter the positions for the {0} (size: {1})", ship.Name, ship.Size);
+                    WriteBreak();
 
-                Console.WriteLine("Enter start position (e.g. A3):");
-                var position = Console.ReadLine();
-                WriteBreak();
-                while (!ship.AddPosition(position))
-                {
-                    Console.WriteLine("Position not valid. Enter position (e.g. A3):");
-                    position = Console.ReadLine();
+                    Console.WriteLine("Enter start position (e.g. A3):");
+                    var startPosition = ParsePosition(Console.ReadLine());
                     WriteBreak();
-                }
-                Console.WriteLine("Enter end position (e.g. A3):");
-                position = Console.ReadLine();
-                WriteBreak();
-                while (!ship.AddPosition(position))
-                {
-                    Console.WriteLine("Position not valid. Enter position (e.g. A3):");
-                    position = Console.ReadLine();
+                    while (startPosition == null || myFleet.SelectMany(s => s.Positions).Contains(startPosition))
+                    {
+                        Console.WriteLine("Start Position not valid. Enter position (e.g. A3):");
+                        startPosition = ParsePosition(Console.ReadLine());
+                        WriteBreak();
+                    }
+                    Console.WriteLine("Enter end position (e.g. A3):");
+                    var endPosition = ParsePosition(Console.ReadLine());
                     WriteBreak();
+                    while (endPosition == null || myFleet.SelectMany(s => s.Positions).Contains(endPosition))
+                    {
+                        Console.WriteLine("End Position not valid. Enter position (e.g. A3):");
+                        endPosition = ParsePosition(Console.ReadLine());
+                        WriteBreak();
+                    }
+
+                    if (DoesIntersect(startPosition, endPosition, ship.Size))
+                    {
+                        Console.WriteLine("Ship Position overlaps with another ship, please re-enter positions");
+                    }
+                    else
+                    {
+                        ship.AddPosition(startPosition);
+                        if (!ship.AddPosition(endPosition))
+                        {
+                            Console.WriteLine("Invalid Size");
+                            ship.Positions.Clear();
+                        } else
+                        {
+                            isValidShip = true;
+                        }
+                    }
+                } while (!isValidShip);
+            }
+        }
+
+        private static bool DoesIntersect(Position startPosition, Position endPosition, int size)
+        {
+            var proposedShipPositions = new List<Position>();
+
+            if (startPosition.Row == endPosition.Row)
+            {
+                if (Math.Abs(startPosition.Column - endPosition.Column) != size) return true;
+
+                var start = (startPosition.Column > endPosition.Column) ? endPosition.Column : startPosition.Column;
+                for (int i = (int)start + 1; i < size + (int)start; i++)
+                {
+                    proposedShipPositions.Add(new Position { Column = (Letters)i, Row = startPosition.Row });
                 }
             }
+            if (startPosition.Column == endPosition.Column)
+            {
+                if (Math.Abs(startPosition.Row - endPosition.Row) == size) return true;
+
+                var start = (startPosition.Row > endPosition.Row) ? endPosition.Row : startPosition.Row;
+                for (int i = start + 1; i < size + start; i++)
+                {
+                    proposedShipPositions.Add(new Position { Column = startPosition.Column, Row = i });
+                }
+            }
+
+            return myFleet.SelectMany(s => s.Positions).Intersect(proposedShipPositions).Any();
         }
 
         private static void InitializeMyFleetStatic()
