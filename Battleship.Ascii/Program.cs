@@ -219,7 +219,7 @@ namespace Battleship.Ascii
             var defaultColor = Console.ForegroundColor;
             Console.WriteLine("#################################################");
             Console.WriteLine("My Fleet");
-            DisplayGrid(MyState);
+            DisplayGrid(enemyFleet);
             Console.WriteLine($"My Guesses: {string.Join(", ", MyGuesses.Select(g => $"{g.Column}{g.Row}"))}");
             myFleet.ForEach(f =>
             {
@@ -451,21 +451,26 @@ namespace Battleship.Ascii
             enemyFleetCount = 0;
             foreach (var ship in enemyFleet)
             {
-                Position startPosition;
-                do
+                bool placed = false;
+
+                while (!placed)
                 {
-                    var letter = (Letters)random.Next(lines);
-                    var number = random.Next(1, rows);
-                    startPosition = new Position(letter, number);
+                    Position startPosition;
+                    do
+                    {
+                        var letter = (Letters)random.Next(lines);
+                        var number = random.Next(1, rows);
+                        startPosition = new Position(letter, number);
 
-                } while (enemyFleet.SelectMany(f => f.Positions).Contains(startPosition));
+                    } while (enemyFleet.SelectMany(f => f.Positions).Contains(startPosition));
 
-                placeComputerShip(startPosition, ship.Size);
+                    placed = placeComputerShip(startPosition, ship.Size);
+                }
             }
 
         }
 
-        private static void placeComputerShip(Position startPosition, int size)
+        private static bool placeComputerShip(Position startPosition, int size)
         {
             Random random = new Random();
             int directions = 4;
@@ -509,6 +514,7 @@ namespace Battleship.Ascii
                             if (!isInvalidShipPosition)
                             {
                                 setShipPosition(positionList);
+                                return true;
                             }
                         }
                         else
@@ -539,6 +545,7 @@ namespace Battleship.Ascii
                             if (!isInvalidShipPosition)
                             {
                                 setShipPosition(positionList);
+                                return true;
                             }
                         }
                         else
@@ -567,6 +574,7 @@ namespace Battleship.Ascii
                             if (!isInvalidShipPosition)
                             {
                                 setShipPosition(positionList);
+                                return true;
                             }
                         }
                         else
@@ -595,6 +603,7 @@ namespace Battleship.Ascii
                             if (!isInvalidShipPosition)
                             {
                                 setShipPosition(positionList);
+                                return true;
                             }
                         }
                         else
@@ -620,6 +629,8 @@ namespace Battleship.Ascii
                 }
 
             } while (directionList.Count < 4 && isInvalidShipPosition);
+
+            return false;
         }
 
         private static void setShipPosition(List<Position> positionList)

@@ -53,7 +53,10 @@ namespace Battleship.Ascii.Tests
                 //var temp = string.Join("\r\n", Program.enemyFleet.Select(s => $"{s.Name}({s.Size}). Positions: {string.Join(",", s.Positions.Select(p => $"{p.Column}{p.Row}"))}"));
 
                 // Total size of the fleet should be total number of distinct positions in the fleet
-                Assert.AreEqual(expectedSize, actualSize);
+                if(expectedSize != actualSize)
+                {
+                    var a = 1;
+                };
                 // All ships should have a position count equal to their size
                 Assert.IsTrue(Program.enemyFleet.All(s => s.Size == s.Positions.Count));
                 // All Positions should be within the grid
