@@ -286,8 +286,6 @@ namespace Battleship.Ascii
                 placeComputerShip(startPosition, ship.Size);
             }
 
-            Console.WriteLine("Enemy Fleet");
-            DisplayGrid(enemyFleet);
         }
 
         private static void placeComputerShip(Position startPosition, int size)
