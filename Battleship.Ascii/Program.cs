@@ -1,12 +1,19 @@
 ﻿
 namespace Battleship.Ascii
 {
+    /*
+     * Fireworks Shamelessly stolen from SirJosh3917
+     * https://github.com/SirJosh3917/Fireworks/
+     * */
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Battleship.Ascii.TelemetryClient;
     using Battleship.GameController;
     using Battleship.GameController.Contracts;
+    using Fireworks;
 
     public class Program
     {
@@ -28,6 +35,10 @@ namespace Battleship.Ascii
 
         static void Main()
         {
+            //DisplayWinnerMessage();
+            //Thread.Sleep(3000);
+            //DisplayFireworks().Wait();
+            //return;
             telemetryClient = new ApplicationInsightsTelemetryClient();
             telemetryClient.TrackEvent("ApplicationStarted");
 
@@ -55,7 +66,8 @@ namespace Battleship.Ascii
                 Console.WriteLine();
 
                 InitializeGame();
-
+                //DisplayGrid(EnemyFleetState);
+                //Console.ReadLine();
                 StartGame();
             }
             catch (Exception e)
@@ -155,6 +167,13 @@ namespace Battleship.Ascii
                     DrawExplosion();
 
                     WriteMessage("Yeah ! Nice hit !", ConsoleColor.Red);
+
+                    if (enemyFleet.All(s => s.IsDestroyed))
+                    {
+                        DisplayWinnerMessage();
+                        Thread.Sleep(3000);
+                        DisplayFireworks().Wait();
+                    }
                 }
                 else
                 {
@@ -163,6 +182,7 @@ namespace Battleship.Ascii
 
                 position = GetRandomPosition();
                 isHit = GameController.CheckIsHit(myFleet, position);
+                UpdateGrid(MyState, position, isHit);
                 telemetryClient.TrackEvent("Computer_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
 
                 WriteBreak();
@@ -174,7 +194,14 @@ namespace Battleship.Ascii
                 {
                     DrawExplosion();
                 }
-                UpdateGrid(MyState, position, isHit);
+
+                if (myFleet.All(s => s.IsDestroyed))
+                {
+                    DisplayLoserMessage();
+                    Console.WriteLine("Press the enter key to continue");
+                    Console.ReadLine();
+                    break;
+                }
 
                 WriteMessage($"Computer shot in {position.Column}{position.Row} and {hitMissMessage}", hitMissMessageColor);
                 WriteBreak();
@@ -322,8 +349,8 @@ namespace Battleship.Ascii
 
         private static void InitializeGame()
         {
-            InitializeMyFleet();
-            //InitializeMyFleetStatic();
+            //InitializeMyFleet();
+            InitializeMyFleetStatic();
             InitializeEnemyFleet();
             InitializeGrids();
         }
@@ -387,6 +414,26 @@ namespace Battleship.Ascii
                     WriteBreak();
                 }
             }
+        }
+
+        private static void InitializeMyFleetStatic()
+        {
+            myFleet = GameController.InitializeShips().ToList();
+
+            myFleet[0].AddPosition(new Position { Column = Letters.A, Row = 1 });
+            myFleet[0].AddPosition(new Position { Column = Letters.A, Row = 5 });
+
+            myFleet[1].AddPosition(new Position { Column = Letters.F, Row = 1 });
+            myFleet[1].AddPosition(new Position { Column = Letters.F, Row = 4 });
+
+            myFleet[2].AddPosition(new Position { Column = Letters.G, Row = 4 });
+            myFleet[2].AddPosition(new Position { Column = Letters.G, Row = 6 });
+
+            myFleet[3].AddPosition(new Position { Column = Letters.F, Row = 8 });
+            myFleet[3].AddPosition(new Position { Column = Letters.H, Row = 8 });
+
+            myFleet[4].AddPosition(new Position { Column = Letters.C, Row = 5 });
+            myFleet[4].AddPosition(new Position { Column = Letters.C, Row = 6 });
         }
 
         public static void InitializeEnemyFleet()
@@ -595,6 +642,56 @@ namespace Battleship.Ascii
 
             enemyFleetCount++;
         }
-    }
+        private static void DisplayWinnerMessage()
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(@" __      __       .__  .__    ________                         ._._._.");
+            Console.WriteLine(@"/  \    /  \ ____ |  | |  |   \______ \   ____   ____   ____   | | | |");
+            Console.WriteLine(@"\   \/\/   // __ \|  | |  |    |    |  \ /  _ \ /    \_/ __ \  | | | |");
+            Console.WriteLine(@" \        /\  ___/|  |_|  |__  |    `   (  <_> )   |  \  ___/   \|\|\|");
+            Console.WriteLine(@"  \__/\  /  \___  >____/____/ /_______  /\____/|___|  /\___  >  ______");
+            Console.WriteLine(@"       \/       \/                    \/            \/     \/   \/\/\/");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(@"_____.___.                                       __  .__                     .__                            ");
+            Console.WriteLine(@"\__  |   | ____  __ __  _____ _______   ____   _/  |_|  |__   ____   __  _  _|__| ____   ____   ___________ ");
+            Console.WriteLine(@" /   |   |/  _ \|  |  \ \__  \\_  __ \_/ __ \  \   __\  |  \_/ __ \  \ \/ \/ /  |/    \ /    \_/ __ \_  __ \");
+            Console.WriteLine(@" \____   (  <_> )  |  /  / __ \|  | \/\  ___/   |  | |   Y  \  ___/   \     /|  |   |  \   |  \  ___/|  | \/");
+            Console.WriteLine(@" / ______|\____/|____/  (____  /__|    \___  >  |__| |___|  /\___  >   \/\_/ |__|___|  /___|  /\___  >__|   ");
+            Console.WriteLine(@" \/                          \/            \/             \/     \/                  \/     \/     \/       ");
+        }
 
+        private static void DisplayLoserMessage()
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(@"__________             .___ .____                   __   ._._._.");
+            Console.WriteLine(@"\______   \_____     __| _/ |    |    __ __   ____ |  | _| | | |");
+            Console.WriteLine(@" |    |  _/\__  \   / __ |  |    |   |  |  \_/ ___\|  |/ / | | |");
+            Console.WriteLine(@" |    |   \ / __ \_/ /_/ |  |    |___|  |  /\  \___|    < \|\|\|");
+            Console.WriteLine(@" |______  /(____  /\____ |  |_______ \____/  \___  >__|_ \______");
+            Console.WriteLine(@"        \/      \/      \/          \/           \/     \/\/\/\/");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(@"_____.___.              .__                       ");
+            Console.WriteLine(@"\__  |   | ____  __ __  |  |   ____  ______ ____  ");
+            Console.WriteLine(@" /   |   |/  _ \|  |  \ |  |  /  _ \/  ___// __ \ ");
+            Console.WriteLine(@" \____   (  <_> )  |  / |  |_(  <_> )___ \\  ___/ ");
+            Console.WriteLine(@" / ______|\____/|____/  |____/\____/____  >\___  >");
+            Console.WriteLine(@" \/                                     \/     \/ ");
+        }
+
+        public static Task DisplayFireworks()
+        {
+            Console.CursorVisible = false;
+
+            var em = new EntityManager();
+
+            var rng = new Random();
+
+            for (int i = 0; i < 75; i++)
+            {
+                em.Spawn(new Firework(rng));
+            }
+
+            return em.Run(100);
+        }
+    }
 }
