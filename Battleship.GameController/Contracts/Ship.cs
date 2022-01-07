@@ -90,6 +90,7 @@ namespace Battleship.GameController.Contracts
                 {
                     if (Math.Abs(Positions[0].Column - position.Column) == Size - 1)
                     {
+                        if (Positions[0].Column > position.Column) Positions[0].Column = position.Column;
                         for (int i = (int)Positions[0].Column + 1; i < Size + (int)Positions[0].Column; i++)
                         {
                             Positions.Add(new Position { Column = (Letters)i, Row = position.Row });
@@ -101,6 +102,7 @@ namespace Battleship.GameController.Contracts
                 {
                     if (Math.Abs(Positions[0].Row - position.Row) == Size - 1)
                     {
+                        if (Positions[0].Row > position.Row) Positions[0].Row = position.Row;
                         for (int i = Positions[0].Row + 1; i < Size + Positions[0].Row; i++)
                         {
                             Positions.Add(new Position { Column = position.Column, Row = i });
