@@ -349,8 +349,8 @@ namespace Battleship.Ascii
 
         private static void InitializeGame()
         {
-            //InitializeMyFleet();
-            InitializeMyFleetStatic();
+            InitializeMyFleet();
+            //InitializeMyFleetStatic();
             InitializeEnemyFleet();
             InitializeGrids();
         }
