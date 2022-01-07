@@ -41,6 +41,7 @@ namespace Battleship.Ascii.Tests
             Assert.IsNotNull(position);
         }
 
+        [TestMethod]
         public void Test_ValidateRandomisedFleet()
         {
             var fleets = new List<string>();
