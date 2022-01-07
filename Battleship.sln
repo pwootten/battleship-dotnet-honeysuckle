@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Battleship.GameController.T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Battleship.GameController.ATDD", "Battleship.GameController.ATDD\Battleship.GameController.ATDD.csproj", "{35B81A80-9520-4B74-B0BD-D0C5FEBCD628}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Battleship.GameController", "Battleship.GameController\Battleship.GameController.csproj", "{1BA92B38-7DF0-4826-8412-49195C930ABB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Battleship.GameController", "Battleship.GameController\Battleship.GameController.csproj", "{1BA92B38-7DF0-4826-8412-49195C930ABB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
